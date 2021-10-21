@@ -1,0 +1,97 @@
+//@version=4
+
+
+study("WWA Sessions", overlay=true)
+
+bgColor = input(title="Activate High/Low View", type=input.bool, defval=false)
+
+NYColor = color.red
+
+
+///Sessions
+
+res = input(title="Resolution", type=input.resolution, defval="D", options=["D","W","M"])
+
+ny = input(title="New York Session", type=input.session, defval="0800-1100")
+ideal_ny = input(title="WWA Recommended Window", type=input.session, defval="0830-1030")
+
+//Bars
+
+is_newbar(sess) =>
+    t = time(res, sess)
+    na(t[1]) and not na(t) or t[1] < t
+
+is_session(sess) =>
+    not na(time(timeframe.period, sess))
+    
+
+//New York
+
+NY = input(title="New York Session", type=input.bool, defval=true)
+
+nyNewbar = is_newbar(ny)
+nySession = is_session(ny)
+
+preferredNYNewbar = is_newbar(ideal_ny)
+preferredNYSession = is_session(ideal_ny)
+
+
+float nyLow = na
+nyLow := if nySession
+    if nyNewbar
+        low
+    else
+        min(nyLow[1],low)
+else
+    nyLow[1]
+
+float nyHigh = na
+nyHigh := if nySession
+    if nyNewbar
+        high
+    else
+        max(nyHigh[1],high)
+else
+    nyHigh[1]
+
+
+
+
+float nyPreferredLow = na
+nyPreferredLow := if preferredNYSession
+    if preferredNYNewbar
+        low
+    else
+        min(nyLow[1],low)
+else
+    nyPreferredLow[1]
+
+float nyPreferredHigh = na
+nyPreferredHigh := if preferredNYSession
+    if preferredNYNewbar
+        high
+    else
+        max(nyPreferredHigh[1],high)
+else
+    nyPreferredHigh[1]
+
+
+
+plotNYL = plot(nyLow, transp = 100)
+plotNYH = plot(nyHigh, transp = 100)
+
+plotPreferredNYL = plot(nyPreferredLow, transp = 100)
+plotPreferredNYH = plot(nyPreferredHigh, transp = 100)
+
+
+fill(plotNYL, plotNYH, color = nySession and NY and bgColor ? color.red : na)
+fill(plotPreferredNYL, plotPreferredNYH, color = preferredNYSession and NY and bgColor ? color.red : na)
+
+bgcolor(nySession and NY and not bgColor ? NYColor : na)
+bgcolor(preferredNYSession and NY and not bgColor ? NYColor : na)
+
+
+
+
+
+
