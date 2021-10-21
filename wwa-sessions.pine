@@ -6,14 +6,19 @@ study("WWA Sessions", overlay=true)
 bgColor = input(title="Activate High/Low View", type=input.bool, defval=false)
 
 NYColor = color.red
-
+LondonColor = color.green
 
 ///Sessions
 
 res = input(title="Resolution", type=input.resolution, defval="D", options=["D","W","M"])
 
+
+london = input(title="London Session", type=input.session, defval="0300-1200")
+ideal_london = input(title="London Session - WWA Recommended", type=input.session, defval="0330-0530")
+
 ny = input(title="New York Session", type=input.session, defval="0800-1100")
-ideal_ny = input(title="WWA Recommended Window", type=input.session, defval="0830-1030")
+ideal_ny = input(title="New York Session - WWA Recommended ", type=input.session, defval="0830-1030")
+
 
 //Bars
 
@@ -24,6 +29,67 @@ is_newbar(sess) =>
 is_session(sess) =>
     not na(time(timeframe.period, sess))
     
+
+//London
+
+London = input(title="London Session", type=input.bool, defval=true)
+
+londonNewbar = is_newbar(london)
+londonSession = is_session(london)
+
+preferredLondonNewbar = is_newbar(ideal_london)
+preferredLondonSession = is_session(ideal_london)
+
+float londonLow = na
+londonLow := if londonSession
+    if londonNewbar
+        low
+    else
+        min(londonLow[1],low)
+else
+    londonLow[1]
+
+float londonHigh = na
+londonHigh := if londonSession
+    if londonNewbar
+        high
+    else
+        max(londonHigh[1],high)
+else
+    londonHigh[1]
+
+
+float londonPreferredLow = na
+londonPreferredLow := if preferredLondonSession
+    if preferredLondonNewbar
+        low
+    else
+        min(londonPreferredLow[1],low)
+else
+    londonPreferredLow[1]
+
+float londonPreferredHigh = na
+londonPreferredHigh := if preferredLondonSession
+    if preferredLondonNewbar
+        high
+    else
+        max(londonPreferredHigh[1],high)
+else
+    londonPreferredHigh[1]
+
+
+plotLL = plot(londonLow, transp = 100)
+plotLH = plot(londonHigh, transp = 100)
+
+plotPreferredLondonLow = plot(londonPreferredLow, transp = 100)
+plotPreferredLondonHigh = plot(londonPreferredHigh, transp = 100)
+
+fill(plotLL, plotLH, color = londonSession and London and bgColor ? LondonColor : na)
+fill(plotPreferredLondonLow, plotPreferredLondonHigh, color = preferredLondonSession and London and bgColor ? color.green : na)
+
+bgcolor(londonSession and London and not bgColor ? LondonColor : na)
+bgcolor(preferredLondonSession and London and not bgColor ? LondonColor : na)
+
 
 //New York
 
